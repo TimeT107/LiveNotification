@@ -318,6 +318,7 @@ private fun EditRecordDialog(
         mutableStateOf(extractDate(initialData.arrivalTime))
     }
     var seat by remember { mutableStateOf(initialData.seat) }
+    var gate by remember { mutableStateOf(initialData.gate) }
     var bottomText by remember { mutableStateOf(initialData.bottomText) }
 
     Dialog(onDismissRequest = onDismiss) {
@@ -341,82 +342,91 @@ private fun EditRecordDialog(
 
                 Spacer(Modifier.height(12.dp))
 
-                OutlinedTextField(
+                AppTextField(
                     value = title,
                     onValueChange = { title = it },
-                    label = { Text("车次") },
+                    label = "车次",
                     modifier = Modifier.fillMaxWidth()
                 )
 
                 Spacer(Modifier.height(8.dp))
 
-                OutlinedTextField(
+                AppTextField(
                     value = startStation,
                     onValueChange = { startStation = it },
-                    label = { Text("出发站") },
+                    label = "出发站",
                     modifier = Modifier.fillMaxWidth()
                 )
 
                 Spacer(Modifier.height(8.dp))
 
-                OutlinedTextField(
+                AppTextField(
                     value = dDate,
                     onValueChange = { dDate = it },
-                    label = { Text("出发日期 yyyy-MM-dd") },
+                    label = "出发日期 yyyy-MM-dd",
                     modifier = Modifier.fillMaxWidth()
                 )
 
                 Spacer(Modifier.height(8.dp))
 
-                OutlinedTextField(
+                AppTextField(
                     value = startTime,
                     onValueChange = { startTime = it },
-                    label = { Text("出发时间 HH:mm") },
+                    label = "出发时间 HH:mm",
                     modifier = Modifier.fillMaxWidth()
                 )
 
                 Spacer(Modifier.height(8.dp))
 
-                OutlinedTextField(
+                AppTextField(
                     value = endStation,
                     onValueChange = { endStation = it },
-                    label = { Text("到达站") },
+                    label = "到达站",
                     modifier = Modifier.fillMaxWidth()
                 )
 
                 Spacer(Modifier.height(8.dp))
 
-                OutlinedTextField(
+                AppTextField(
                     value = aDate,
                     onValueChange = { aDate = it },
-                    label = { Text("到达日期 yyyy-MM-dd") },
+                    label = "到达日期 yyyy-MM-dd",
                     modifier = Modifier.fillMaxWidth()
                 )
 
                 Spacer(Modifier.height(8.dp))
 
-                OutlinedTextField(
+                AppTextField(
                     value = endTime,
                     onValueChange = { endTime = it },
-                    label = { Text("到达时间 HH:mm") },
+                    label = "到达时间 HH:mm",
                     modifier = Modifier.fillMaxWidth()
                 )
 
                 Spacer(Modifier.height(8.dp))
 
-                OutlinedTextField(
+                AppTextField(
                     value = seat,
                     onValueChange = { seat = it },
-                    label = { Text("座位") },
+                    label = "座位",
                     modifier = Modifier.fillMaxWidth()
                 )
 
                 Spacer(Modifier.height(8.dp))
 
-                OutlinedTextField(
+                AppTextField(
+                    value = gate,
+                    onValueChange = { gate = it },
+                    label = "检票口",
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(Modifier.height(8.dp))
+
+                AppTextField(
                     value = bottomText,
                     onValueChange = { bottomText = it },
-                    label = { Text("底部信息") },
+                    label = "底部信息",
                     modifier = Modifier.fillMaxWidth()
                 )
 
@@ -451,6 +461,7 @@ private fun EditRecordDialog(
                                 arrivalTime = newArrivalTime,
                                 departureDate = dDate,
                                 seat = seat,
+                                gate = gate,
                                 bottomText = bottomText
                             )
 
@@ -498,8 +509,13 @@ private fun activateRecord(
         return
     }
 
-    // 写入内存共享状态，并启动 Service
-    NotificationStore.current = data
+    // ★ 根据 type 写入对应槽位
+    if (data.type == "flight") {
+        NotificationStore.currentFlight = data
+    } else {
+        NotificationStore.currentTrain = data
+    }
+
     context.startForegroundService(
         Intent(context, LiveService::class.java)
     )

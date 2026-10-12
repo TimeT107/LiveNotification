@@ -5,10 +5,13 @@ import android.app.*
 import android.content.Context
 import android.content.Intent
 import android.graphics.BitmapFactory
-import android.graphics.Color
 import android.graphics.drawable.Icon
 import android.os.Build
 import androidx.annotation.RequiresApi
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Paint
+import android.graphics.Typeface
 
 
 class LiveNotificationManager(
@@ -20,10 +23,19 @@ class LiveNotificationManager(
 
     companion object {
         private const val CHANNEL_ID = "live"
-        private const val NOTIFICATION_ID = 1001
+
+        /** 火车通知 ID */
+        private const val NOTIFICATION_ID_TRAIN = 1001
+
+        /** 航班通知 ID */
+        private const val NOTIFICATION_ID_FLIGHT = 1011
     }
 
-    private var currentData: LiveData? = null
+    // 去重状态（按类型分别记录）
+    private var lastHashTrain: Int = 0
+    private var lastHashFlight: Int = 0
+    private var createdWhenTrain: Long = 0L
+    private var createdWhenFlight: Long = 0L
 
     fun createChannel() {
         val channel = NotificationChannel(
@@ -45,16 +57,21 @@ class LiveNotificationManager(
     }
 
     /**
-     * 把车次压缩成符合 PixelOS Live Chip 限制的短文本
+     * 把车次/航班号压缩成符合 PixelOS Live Chip 限制的短文本
+     * 高铁：G1234 / D123 / C3456
+     * 航班：CA1234 / MU5678 / CZ9012
+     * 都是纯 ASCII，可直接复用
      */
     private fun chipText(data: LiveData): String {
-        val trainNo = data.title.replace("次", "").trim()
+        val code = data.title
+            .replace("次", "")
+            .trim()
 
-        if (trainNo.isNotEmpty() &&
-            trainNo.length <= 6 &&
-            trainNo.all { it.code < 128 }
+        if (code.isNotEmpty() &&
+            code.length <= 6 &&
+            code.all { it.code < 128 }
         ) {
-            return trainNo
+            return code
         }
 
         val autoStatus = CountdownManager.calcAutoStatus(data.departureTime)
@@ -64,31 +81,47 @@ class LiveNotificationManager(
             return autoStatus
         }
 
-        return "TRAIN"
+        return if (data.type == "flight") "FLIGHT" else "TRAIN"
     }
 
     /**
-     * 构建 Android 16 (API 36) 的 ProgressStyle 进度条
-     * 含火车头图标，位于进度条头部
+     * 把 emoji 渲染成 Bitmap，用作 ProgressStyle 的 tracker 图标
      */
+    private fun createEmojiBitmap(emoji: String, sizePx: Int): Bitmap {
+        val bitmap = Bitmap.createBitmap(
+            sizePx, sizePx, Bitmap.Config.ARGB_8888
+        )
+        val canvas = Canvas(bitmap)
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            textSize = sizePx * 0.85f
+            textAlign = Paint.Align.CENTER
+            typeface = Typeface.DEFAULT
+        }
+        val metrics = paint.fontMetrics
+        val baseline = (sizePx - metrics.bottom - metrics.top) / 2f
+        canvas.drawText(emoji, sizePx / 2f, baseline, paint)
+        return bitmap
+    }
+
     @RequiresApi(Build.VERSION_CODES.BAKLAVA)
     private fun buildProgressStyle(data: LiveData): Notification.ProgressStyle {
 
         val completedColor = context.getColor(R.color.progress_completed)
         val remainingColor = context.getColor(R.color.progress_remaining)
 
-        // 防止 0 / 100 时段落长度为 0 引起异常
         val completedLength = data.progress.coerceIn(1, 99)
         val remainingLength = 100 - completedLength
 
         return Notification.ProgressStyle()
             .setStyledByProgress(false)
-            // ★ 火车头位置：跟随当前进度
             .setProgress(data.progress.coerceIn(0, 100))
             .setProgressTrackerIcon(
-                Icon.createWithResource(context, R.drawable.ic_train_head)
+                if (data.type == "flight") {
+                    Icon.createWithBitmap(createEmojiBitmap("✈️", 96))
+                } else {
+                    Icon.createWithResource(context, R.drawable.ic_train_head)
+                }
             )
-            // ★ 着色分界：两段，已完成 / 未完成
             .setProgressSegments(
                 listOf(
                     Notification.ProgressStyle.Segment(completedLength)
@@ -101,11 +134,33 @@ class LiveNotificationManager(
 
     fun show(data: LiveData) {
 
-        currentData = data
+        val isFlight = data.type == "flight"
+        val notificationId = if (isFlight) NOTIFICATION_ID_FLIGHT
+        else NOTIFICATION_ID_TRAIN
+
+        // ============ 去重 ============
+        val autoStatus = CountdownManager.calcAutoStatus(data.departureTime)
+        val hash = "${data.title}|${data.progress}|$autoStatus|${data.seat}"
+            .hashCode()
+
+        val lastHash = if (isFlight) lastHashFlight else lastHashTrain
+        if (hash == lastHash) return
+
+        if (isFlight) {
+            lastHashFlight = hash
+        } else {
+            lastHashTrain = hash
+        }
+
+        // ============ 时间戳 ============
+        var createdWhen = if (isFlight) createdWhenFlight else createdWhenTrain
+        if (createdWhen == 0L) {
+            createdWhen = System.currentTimeMillis()
+            if (isFlight) createdWhenFlight = createdWhen
+            else createdWhenTrain = createdWhen
+        }
 
         // ============ 文本 ============
-        val autoStatus = CountdownManager.calcAutoStatus(data.departureTime)
-
         val shortDate = try {
             val list = data.departureDate.split("-")
             "${list[1]}月${list[2]}日"
@@ -118,10 +173,20 @@ class LiveNotificationManager(
             data.arrivalTime
         )
 
-        // 折叠副文本 / 展开详情（ProgressStyle 下只会显示第一行）
-        // 折叠副文本 / 展开详情（ProgressStyle 下只会显示第一行）
-        val collapsedLine =
+        // 折叠副文本
+        val collapsedLine = if (isFlight) {
+            // 航班：机场 → 机场 · 登机口 · 状态
+            buildString {
+                append("${data.startStation} → ${data.endStation}")
+                if (data.boardingGate.isNotBlank()) {
+                    append(" · 登机口 ${data.boardingGate}")
+                }
+                append(" · $autoStatus")
+            }
+        } else {
+            // 火车：站 → 站 · 座位 · 状态
             "${data.startStation} ${data.startTime} → ${data.endStation} ${data.endTime} · ${data.seat} · $autoStatus"
+        }
 
         // ============ Intent ============
         val intent = Intent(context, MainActivity::class.java)
@@ -138,66 +203,105 @@ class LiveNotificationManager(
             R.drawable.train_logo
         )
 
-        // ============ 构建通知 ============
+        // ============ 通知 ============
         val builder = Notification.Builder(context, CHANNEL_ID)
 
         builder
-            .setSmallIcon(R.drawable.train_chip)
+            .setSmallIcon(
+                if (isFlight) R.drawable.flight_chip
+                else R.drawable.train_chip
+            )
             .setLargeIcon(icon)
 
-            // 胶囊主文本
-            .setContentTitle(data.title)
-            // 折叠副文本（ProgressStyle 下只显示这一行）
+            .setContentTitle(if (isFlight) "✈️ ${data.title}" else data.title)
             .setContentText(collapsedLine)
 
             .setContentIntent(pendingIntent)
 
-            // Live Chip 关键
             .setOngoing(true)
             .setCategory(Notification.CATEGORY_PROGRESS)
 
             .setOnlyAlertOnce(true)
             .setAutoCancel(false)
 
-            // 锁屏可见性
             .setVisibility(Notification.VISIBILITY_PUBLIC)
 
-            // 倒计时：以到达时间为终点
             .setWhen(data.arrivalTime)
             .setUsesChronometer(true)
             .setChronometerCountDown(true)
             .setShowWhen(false)
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA) {
-            // Android 16+：使用 ProgressStyle（带火车头图标）
             builder.setStyle(buildProgressStyle(data))
             enablePromotedOngoing(builder, chipText(data))
         } else {
-            // 低版本回退：使用 BigTextStyle + setProgress
+            // 低版本回退
+            val detail = if (isFlight) {
+                buildString {
+                    append("✈️ ${data.title} · $shortDate\n")
+                    if (data.airline.isNotBlank()) {
+                        append("${data.airline}\n")
+                    }
+                    append("$autoStatus\n")
+                    append("${data.startStation} ${data.startTime} → ${data.endStation} ${data.endTime}\n")
+                    if (data.terminal.isNotBlank()) {
+                        append("航站楼 ${data.terminal}   ")
+                    }
+                    if (data.boardingGate.isNotBlank()) {
+                        append("登机口 ${data.boardingGate}   ")
+                    }
+                    append("\n")
+                    if (data.seat.isNotBlank()) {
+                        append("座位 ${data.seat}   ")
+                    }
+                    append(countdown)
+                    append("\n${data.bottomText}")
+                }
+            } else {
+                buildString {
+                    append("🚄 ${data.title} · $shortDate\n")
+                    append("$autoStatus\n")
+                    append("${data.startStation} ${data.startTime} → ${data.endStation} ${data.endTime}\n")
+                    append("座位 ${data.seat}   $countdown\n")
+                    append(data.bottomText)
+                }
+            }
+
             builder.setStyle(
                 Notification.BigTextStyle()
                     .setBigContentTitle("${data.title} · $shortDate")
-                    .bigText("""
-$autoStatus
-${data.startStation} ${data.startTime} → ${data.endStation} ${data.endTime}
-座位 ${data.seat}   $countdown
-${data.bottomText}
-""".trimIndent())
+                    .bigText(detail)
             )
             builder.setProgress(100, data.progress, false)
         }
 
-        manager.notify(
-            NOTIFICATION_ID,
-            builder.build()
-        )
+        manager.notify(notificationId, builder.build())
     }
 
     fun update(data: LiveData) {
         show(data)
     }
 
-    fun stop() {
-        manager.cancel(NOTIFICATION_ID)
+    /**
+     * 兼容：停止火车通知
+     * 旧代码调用 stop() 等价于 stopTrain()
+     */
+    fun stop() = stopTrain()
+
+    fun stopTrain() {
+        manager.cancel(NOTIFICATION_ID_TRAIN)
+        lastHashTrain = 0
+        createdWhenTrain = 0L
+    }
+
+    fun stopFlight() {
+        manager.cancel(NOTIFICATION_ID_FLIGHT)
+        lastHashFlight = 0
+        createdWhenFlight = 0L
+    }
+
+    fun stopAll() {
+        stopTrain()
+        stopFlight()
     }
 }

@@ -183,7 +183,6 @@ fun ExpressScreen(
 
 /**
  * 统一刷新快递通知
- * 数据变化后调用，保证 Service 没在跑时通知也能及时更新
  */
 private fun refreshExpressNotification(context: Context) {
     ExpressNotificationManager(context).show(ExpressStore.getAll())
@@ -229,21 +228,21 @@ private fun ExpressEditDialog(
 
                 Spacer(Modifier.height(12.dp))
 
-                OutlinedTextField(
+                AppTextField(
                     value = location,
                     onValueChange = { location = it },
-                    label = { Text("取件地点") },
-                    placeholder = { Text("例：菜鸟驿站（小区东门）") },
+                    label = "取件地点",
+                    placeholder = "例：菜鸟驿站（小区东门）",
                     modifier = Modifier.fillMaxWidth()
                 )
 
                 Spacer(Modifier.height(8.dp))
 
-                OutlinedTextField(
+                AppTextField(
                     value = code,
                     onValueChange = { code = it },
-                    label = { Text("取件码") },
-                    placeholder = { Text("例：123-4-5678") },
+                    label = "取件码",
+                    placeholder = "例：123-4-5678",
                     modifier = Modifier.fillMaxWidth()
                 )
 

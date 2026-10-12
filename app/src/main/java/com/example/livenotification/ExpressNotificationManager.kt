@@ -25,6 +25,11 @@ class ExpressNotificationManager(
         private val ICON_SMALL = R.drawable.ic_express
         private val ICON_LARGE = R.drawable.ic_express_large
     }
+
+    // 去重状态
+    private var lastHash: Int = 0
+    private var createdWhen: Long = 0L
+
     fun createChannel() {
         val channel = NotificationChannel(
             CHANNEL_ID,
@@ -42,6 +47,18 @@ class ExpressNotificationManager(
         if (items.isEmpty()) {
             stop()
             return
+        }
+
+        // ============ 去重 ============
+        val hash = items
+            .map { "${it.location}|${it.code}" }
+            .joinToString("|")
+            .hashCode()
+        if (hash == lastHash) return
+        lastHash = hash
+
+        if (createdWhen == 0L) {
+            createdWhen = System.currentTimeMillis()
         }
 
         val count = items.size
@@ -80,12 +97,9 @@ class ExpressNotificationManager(
             .setSmallIcon(ICON_SMALL)
             .setLargeIcon(largeIcon)
 
-            // 标题：待取件 X 件
             .setContentTitle("待取件 $count 件")
-            // 折叠副文本：第一条取件码
             .setContentText(collapsedLine)
 
-            // 展开详情：所有快递列表
             .setStyle(
                 Notification.BigTextStyle()
                     .setBigContentTitle("共 $count 件待取")
@@ -101,15 +115,13 @@ class ExpressNotificationManager(
             .setAutoCancel(false)
             .setVisibility(Notification.VISIBILITY_PUBLIC)
 
-            // ★ 让胶囊文字显示的"有时间性"标记
-            //   副作用：通知右上角会出现一个正计时（从创建时间起）
-            .setWhen(System.currentTimeMillis())
+            // ★ 固定时间戳，避免每次 notify 都被视为新通知
+            .setWhen(createdWhen)
             .setUsesChronometer(true)
             .setShowWhen(false)
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA) {
             builder.setRequestPromotedOngoing(true)
-            // ★ 胶囊文本：纯中文 3 字，符合 PixelOS 的实测规则
             builder.setShortCriticalText("待取件")
         }
 
@@ -121,5 +133,7 @@ class ExpressNotificationManager(
 
     fun stop() {
         manager.cancel(NOTIFICATION_ID)
+        lastHash = 0
+        createdWhen = 0L
     }
 }

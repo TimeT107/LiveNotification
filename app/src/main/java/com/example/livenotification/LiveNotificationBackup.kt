@@ -5,7 +5,6 @@ import org.json.JSONObject
 
 /**
  * LiveData ↔ JSON 的双向转换工具
- * 只处理单条 LiveData，不含列表/文件的读写逻辑
  */
 object LiveNotificationBackup {
 
@@ -27,6 +26,13 @@ object LiveNotificationBackup {
             put("remainText", data.remainText)
             put("departureDate", data.departureDate)
             put("seat", data.seat)
+            put("gate", data.gate)
+            // ★ 新增字段
+            put("type", data.type)
+            put("airline", data.airline)
+            put("terminal", data.terminal)
+            put("boardingGate", data.boardingGate)
+            put("checkinCounter", data.checkinCounter)
         }
     }
 
@@ -48,16 +54,21 @@ object LiveNotificationBackup {
                 arrivalTime = json.optLong("arrivalTime", 0L),
                 remainText = json.optString("remainText", "计算中"),
                 departureDate = json.optString("departureDate", ""),
-                seat = json.optString("seat", "")
+                seat = json.optString("seat", ""),
+                gate = json.optString("gate", ""),
+                // ★ 新增字段
+                type = json.optString("type", "train"),
+                airline = json.optString("airline", ""),
+                terminal = json.optString("terminal", ""),
+                boardingGate = json.optString("boardingGate", ""),
+                checkinCounter = json.optString("checkinCounter", "")
             )
         } catch (e: Exception) {
             null
         }
     }
 
-    // ====================== LiveData 字符串级别的便捷方法 ======================
-
-    /** LiveData → JSON 字符串（用于存进 LiveNotificationRecord.payloadJson） */
+    /** LiveData → JSON 字符串 */
     fun toJsonString(data: LiveData): String {
         return toJson(data).toString()
     }
@@ -72,9 +83,7 @@ object LiveNotificationBackup {
         }
     }
 
-    // ====================== 记录级别的转换（Record ↔ 完整 JSON） ======================
-
-    /** 单条 Record → JSON（含 payload 嵌套） */
+    /** 单条 Record → JSON */
     fun recordToJson(record: LiveNotificationRecord): JSONObject {
         val obj = JSONObject().apply {
             put("id", record.id)
@@ -84,7 +93,6 @@ object LiveNotificationBackup {
             put("endTime", record.endTime)
             put("status", record.status)
         }
-        // 如果 payloadJson 是合法 JSON，就作为嵌套对象放进去
         val payload = fromJsonString(record.payloadJson)
         if (payload != null) {
             obj.put("payload", toJson(payload))
@@ -92,7 +100,7 @@ object LiveNotificationBackup {
         return obj
     }
 
-    /** 单个 JSON → Record；解析失败返回 null */
+    /** 单个 JSON → Record */
     fun recordFromJson(json: JSONObject): LiveNotificationRecord? {
         return try {
             val payloadStr = json.optJSONObject("payload")?.toString() ?: ""
