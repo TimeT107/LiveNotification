@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">LiveChip</string>
+    <string name="widget_music_description">音乐快捷控件</string>
+    <string name="widget_trip_description">行程快捷控件</string>
 </resources>

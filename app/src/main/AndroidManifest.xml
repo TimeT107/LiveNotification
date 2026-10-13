@@ -103,6 +103,30 @@
             android:name=".FlashlightActionReceiver"
             android:exported="false" />
 
+        <!-- 音乐微件 -->
+        <receiver
+            android:name=".MusicWidgetProvider"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_music_info" />
+        </receiver>
+
+        <!-- 行程微件 -->
+        <receiver
+            android:name=".TripWidgetProvider"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_trip_info" />
+        </receiver>
+
     </application>
 
 </manifest>

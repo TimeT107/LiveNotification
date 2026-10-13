@@ -32,6 +32,10 @@ class LiveService : Service() {
     private var verificationListener: (() -> Unit)? = null
     private var flashlightListener: (() -> Unit)? = null
 
+    // 微件刷新缓存（避免每秒重刷）
+    private var lastMusicWidgetHash: Int = 0
+    private var lastTripWidgetHash: Int = 0
+
     override fun onCreate() {
         super.onCreate()
 
@@ -138,6 +142,13 @@ class LiveService : Service() {
                         Log.e("LiveService", "刷新音乐通知失败", e)
                     }
                 }
+
+                // ★ 刷新音乐微件（内部有去重）
+                try {
+                    refreshMusicWidget()
+                } catch (_: Exception) {
+                }
+
                 delay(1_000L)
             }
         }
@@ -206,9 +217,49 @@ class LiveService : Service() {
         } else {
             flashlightManager.stop()
         }
-
         // ★ 更新热区（根据音乐状态）
         updateHotZone()
+
+        // ★ 刷新手电筒/行程微件
+        refreshTripWidget()
+    }
+
+    /**
+     * 刷新行程微件（只在关键数据变化时）
+     */
+    private fun refreshTripWidget() {
+        val data = NotificationStore.currentTrain
+            ?: NotificationStore.currentFlight
+
+        val hash = if (data == null) {
+            -1
+        } else {
+            "${data.title}|${data.progress}|${data.startTime}|${data.endTime}"
+                .hashCode()
+        }
+
+        if (hash != lastTripWidgetHash) {
+            lastTripWidgetHash = hash
+            TripWidgetProvider.updateAll(this)
+        }
+    }
+
+    /**
+     * 刷新音乐微件（只在关键数据变化时）
+     */
+    private fun refreshMusicWidget() {
+        val entry = MediaSessionStore.getCurrent()
+        val fallback = MusicStore.get()
+
+        val title = entry?.title ?: fallback?.title ?: ""
+        val artist = entry?.artist ?: fallback?.artist ?: ""
+        val isPlaying = entry?.isPlaying ?: fallback?.isPlaying ?: false
+
+        val hash = "$title|$artist|$isPlaying".hashCode()
+        if (hash != lastMusicWidgetHash) {
+            lastMusicWidgetHash = hash
+            MusicWidgetProvider.updateAll(this)
+        }
     }
 
     /**
