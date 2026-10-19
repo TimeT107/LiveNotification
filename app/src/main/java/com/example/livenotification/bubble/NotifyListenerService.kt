@@ -216,6 +216,11 @@ class NotifyListenerService : NotificationListenerService() {
             setSound(null, null)
             enableVibration(false)
             enableLights(false)
+            // 显式允许气泡：部分 ROM（ColorOS 等）对新建渠道默认不放开气泡，
+            // 此时 areBubblesEnabled/canBubble 为 false → 服务会降级成普通通知并跳过拦截。
+            // 原工程依赖用户手动去系统设置里开；合并进本 App（新包名）后没有继承那个授权，
+            // 所以这里在创建渠道时就显式打开（用户仍可在系统设置里关掉）。
+            setAllowBubbles(true)
         }
         nm.createNotificationChannel(channel)
     }

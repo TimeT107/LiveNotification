@@ -45,6 +45,7 @@
 | 4 | `KeepAliveService` 里 `MainActivity::class.java` → `com.example.livenotification.MainActivity::class.java` | 常驻通知点击回到主软件主页 |
 | 5 | `BubbleActivity` 改为 Compose（`ComponentActivity` + `LiveNotificationDemoTheme` + `BubbleChatScreen`） | UI 与主软件完全同步 |
 | 6 | 设置页改为 Compose（`BubbleSettingsScreen.kt`，设计语言同 `SettingsScreen.kt`） | 同上 |
+| 7 | `NotifyListenerService.createNotificationChannel()` 里加 `setAllowBubbles(true)` | **功能性修复（偏离原工程）**：部分 ROM（ColorOS 等）对新建渠道默认不放开气泡 → `BubbleSettings.bubblesAllowed()` 为 false → 服务会**降级成普通通知并跳过拦截**（表现为"不弹气泡、也不拦截原通知"）。原工程靠用户手动去系统设置里开；合并后是**新包名**，没有继承那份授权，所以创建渠道时显式打开。同步上游时**必须保留**这一行 |
 
 ## 资源 / 清单（本项目侧新增，不在原工程里）
 
