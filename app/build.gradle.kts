@@ -16,8 +16,8 @@ android {
         applicationId = "com.example.livenotification"
         minSdk = 35
         targetSdk = 36
-        versionCode = 17
-        versionName = "9.2"
+        versionCode = 18
+        versionName = "9.3"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

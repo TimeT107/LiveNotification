@@ -64,21 +64,19 @@ object WindowBubble {
             return false
         }
 
-        // 横屏 + 竖屏应用：打开 FORCE_NON_RESIZE_APP，让系统在小窗里按竖屏比例 letterbox
-        if (!BubbleGeometry.appFitsBubbleWindow(context, pkg)) {
-            val compatOk = AppCompatMode.ensureNonResizeable(pkg)
-            Log.i(TAG, "小窗：横屏+竖屏应用 compat=" + compatOk + " pkg=" + pkg)
-            if (!compatOk) {
-                // 拿不到 root：直接打开应用，避免畸形小窗
-                return runCatching {
-                    context.startActivity(launchIntent.apply {
-                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    })
-                    true
-                }.getOrElse {
-                    Log.w(TAG, "直接打开失败 pkg=" + pkg, it)
-                    false
-                }
+        // 让目标应用可 resize：不可调整大小的应用会被系统按全屏处理（黑底）；
+        // 横屏时也靠它让应用按平板/横屏布局展开。拿不到 root 就直接打开应用。
+        val resizeOk = AppCompatMode.ensureGlobalResizeable()
+        Log.i(TAG, "小窗：resize兼容=" + resizeOk + " pkg=" + pkg)
+        if (!resizeOk) {
+            return runCatching {
+                context.startActivity(launchIntent.apply {
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                })
+                true
+            }.getOrElse {
+                Log.w(TAG, "直接打开失败 pkg=" + pkg, it)
+                false
             }
         }
 

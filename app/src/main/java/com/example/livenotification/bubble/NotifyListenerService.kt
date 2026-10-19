@@ -696,32 +696,31 @@ class NotifyListenerService : NotificationListenerService() {
         //   关闭 = 我们自己的消息面板（历史 + 回复 + 打开应用）。
         // 横屏显示 + 竖屏应用时，气泡窗口会被拉成宽扁、把应用的布局横向撑开（错位），
         // 这种情况改用我们自己的面板 —— 面板是简单纵向布局，任何比例都不变形。
-        val fitsBubbleWindow = BubbleGeometry.appFitsBubbleWindow(this, conv.pkg)
-        // 横屏 + 竖屏应用：给该应用打开 FORCE_NON_RESIZE_APP，系统就会在宽气泡窗口里
-        // 按它自己的竖屏比例 letterbox 显示（两侧加黑边），而不是把布局横向撑开。
-        // 拿不到 root 时才退回我们自己的面板，避免畸形拉伸。
         var useSourceApp = BubbleSettings.expandSourceApp(this) && bubblesOk
-        if (useSourceApp && !fitsBubbleWindow) {
-            val compatOk = AppCompatMode.ensureNonResizeable(conv.pkg)
-            Log.i(
-                TAG,
-                "气泡内容判定 pkg=" + conv.pkg + " 横屏显示=true 横屏应用=false compat=" + compatOk
-            )
-            if (!compatOk) useSourceApp = false
+        var sourceLaunch = if (useSourceApp) {
+            packageManager.getLaunchIntentForPackage(conv.pkg)
         } else {
+            null
+        }
+        if (useSourceApp && sourceLaunch == null) useSourceApp = false
+        if (useSourceApp) {
+            // 统一让目标应用"可调整大小"：
+            //   1) 不可调整大小的应用（QQ 等）塞进气泡会被系统按全屏处理 → 背景纯黑；
+            //   2) 横屏使用时，气泡窗口本来就宽，放开 resize 后应用若有平板/横屏布局
+            //      （QQ、微信等）就会直接按平板样式排版 —— 这就是想要的"横屏/平板气泡"。
+            // 拿不到 root 打不开兼容开关，就退回我们自己的面板（不会黑屏、不会拉伸）。
+            val resizeOk = AppCompatMode.ensureGlobalResizeable()
             Log.i(
                 TAG,
                 "气泡内容判定 pkg=" + conv.pkg +
                     " 横屏显示=" + BubbleGeometry.isDisplayLandscape(this) +
                     " 横屏应用=" + BubbleGeometry.isLandscapeApp(this, conv.pkg) +
-                    " → 用原应用界面=" + useSourceApp
+                    " resize兼容=" + resizeOk +
+                    " → 用原应用界面=" + resizeOk
             )
+            if (!resizeOk) useSourceApp = false
         }
-        val sourceLaunch = if (useSourceApp) {
-            packageManager.getLaunchIntentForPackage(conv.pkg)
-        } else {
-            null
-        }
+        if (!useSourceApp) sourceLaunch = null
         val bubbleIntent = (sourceLaunch ?: Intent(this, BubbleActivity::class.java)).apply {
             putExtra(BubbleActivity.EXTRA_PACKAGE_NAME, conv.pkg)
             putExtra(BubbleActivity.EXTRA_TITLE, conv.title)

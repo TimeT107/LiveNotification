@@ -42,9 +42,11 @@ object BubbleGeometry {
         ActivityInfo.SCREEN_ORIENTATION_USER_PORTRAIT,
     )
 
-    /** 气泡展开高度（dp）：横屏应用按当前屏幕宽度算 16:9，竖屏应用沿用 600 */
+    /** 气泡展开高度（dp）：横屏显示或横屏应用按当前窗口宽度算 16:9（平板式），否则 600 */
     fun desiredHeightDp(context: Context, pkg: String): Int {
-        if (!isLandscapeApp(context, pkg)) return PORTRAIT_HEIGHT_DP
+        // 横屏显示时（例如横屏打游戏），气泡窗口本身就宽，统一给 16:9 的"平板式"高度：
+        // 支持平板布局的应用（QQ、微信等）会直接按横屏/平板样式展开。
+        if (!isDisplayLandscape(context) && !isLandscapeApp(context, pkg)) return PORTRAIT_HEIGHT_DP
         val metrics = context.resources.displayMetrics
         val widthDp = metrics.widthPixels / metrics.density
         val heightDp = (widthDp * 9f / 16f).roundToInt().coerceAtLeast(MIN_LANDSCAPE_HEIGHT_DP)

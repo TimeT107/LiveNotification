@@ -45,6 +45,7 @@
 | 4 | `KeepAliveService` 里 `MainActivity::class.java` → `com.example.livenotification.MainActivity::class.java` | 常驻通知点击回到主软件主页 |
 | 5 | `BubbleActivity` 改为 Compose（`ComponentActivity` + `LiveNotificationDemoTheme` + `BubbleChatScreen`） | UI 与主软件完全同步 |
 | 6 | 设置页改为 Compose（`BubbleSettingsScreen.kt`，设计语言同 `SettingsScreen.kt`） | 同上 |
+| 8 | 展开原应用前调用 `AppCompatMode.ensureGlobalResizeable()`（root: `settings put global force_resizable_activities 1`），失败退回自家面板；`BubbleGeometry.desiredHeightDp` 横屏显示也走 16:9 | **功能性修复（偏离原工程）**：QQ 这类应用 Activity 在清单里就 nonResizable，塞进气泡会被系统按全屏处理 → **气泡背景纯黑**（真机：纯黑占比 46.8%），而且横屏时不会用平板布局。注意：per-app 的 `FORCE_RESIZE_APP`(174042936) 对 QQ **无效**（实测任务仍 nonResizable），必须用全局 `force_resizable_activities`（实测 QQ 任务立即变可 resize）。原工程的 letterbox（FORCE_NON_RESIZE_APP）保留黑边、也不触发平板布局 |
 | 7 | `NotifyListenerService.createNotificationChannel()` 里加 `setAllowBubbles(true)` | **功能性修复（偏离原工程）**：部分 ROM（ColorOS 等）对新建渠道默认不放开气泡 → `BubbleSettings.bubblesAllowed()` 为 false → 服务会**降级成普通通知并跳过拦截**（表现为"不弹气泡、也不拦截原通知"）。原工程靠用户手动去系统设置里开；合并后是**新包名**，没有继承那份授权，所以创建渠道时显式打开。同步上游时**必须保留**这一行 |
 
 ## 资源 / 清单（本项目侧新增，不在原工程里）
