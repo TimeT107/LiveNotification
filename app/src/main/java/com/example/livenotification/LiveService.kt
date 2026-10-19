@@ -66,9 +66,14 @@ class LiveService : Service() {
         flashlightManager = FlashlightNotificationManager(this)
         flashlightManager.createChannel()
 
-        // 初始化手电筒控制器并注册回调
-        FlashlightController.init(this)
-        FlashlightController.registerCallback(this)
+        // 初始化手电筒控制器并注册回调（受功能开关控制，默认关闭）
+        if (FeaturePreferences.isFlashlightEnabled(this)) {
+            FlashlightController.init(this)
+            FlashlightController.registerCallback(this)
+        }
+
+        // 耳机卡片：A2DP 连接建立时弹出（自己绘制，系统 Fast Pair 弹窗无法复用）
+        EarbudsPopupController.install(this)
 
         storage = LiveNotificationStorage(this)
 
@@ -329,6 +334,7 @@ class LiveService : Service() {
     }
 
     override fun onDestroy() {
+        EarbudsPopupController.uninstall(this)
         expressListener?.let { ExpressStore.removeListener(it) }
         musicListener?.let { MusicStore.removeListener(it) }
         verificationListener?.let { VerificationStore.removeListener(it) }

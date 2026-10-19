@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- LSPosed 作用域（合并自 LockScreenIsland 模块） -->
+<resources>
+    <string-array name="xposedscope">
+        <!-- 只作用于系统界面 -->
+        <item>com.android.systemui</item>
+    </string-array>
+</resources>

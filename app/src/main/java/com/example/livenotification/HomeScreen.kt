@@ -18,9 +18,13 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Chat
+import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.Headphones
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -52,7 +56,12 @@ fun HomeScreen(
     onOpenMediaControl: () -> Unit,
     onLongPressTrip: () -> Unit,
     onLongPressFlight: () -> Unit,
-    onLongPressExpress: () -> Unit
+    onLongPressExpress: () -> Unit,
+    onOpenBudsControl: () -> Unit = {},
+    // 打开锁屏岛设置（Compose 页面，风格与主软件完全一致）
+    onOpenIslandSettings: () -> Unit = {},
+    // 打开气泡通知设置（Compose 页面，风格与主软件完全一致）
+    onOpenBubbleSettings: () -> Unit = {}
 ) {
 
     val context = LocalContext.current
@@ -278,7 +287,148 @@ fun HomeScreen(
             )
         }
 
+        Spacer(Modifier.height(12.dp))
+
+        // ============ 耳机降噪控制入口 ============
+        BudsControlEntryCard(onClick = onOpenBudsControl)
+
+        // ============ 锁屏岛设置入口（合并自 LockScreenIsland 模块）============
+        Spacer(Modifier.height(16.dp))
+
+        ElevatedCard(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { onOpenIslandSettings() }
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Settings,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary
+                )
+                Spacer(Modifier.width(12.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "锁屏岛",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        text = "样式 / 位置与大小 / 调试日志",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Icon(
+                    imageVector = Icons.Filled.ChevronRight,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+
+        // ============ 气泡通知入口（合并自 BubbleNotifyDemo）============
+        Spacer(Modifier.height(16.dp))
+
+        ElevatedCard(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { onOpenBubbleSettings() }
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Chat,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary
+                )
+                Spacer(Modifier.width(12.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "气泡通知",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        text = "微信 / QQ 消息接成原生气泡",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Icon(
+                    imageVector = Icons.Filled.ChevronRight,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+
         Spacer(Modifier.height(24.dp))
+    }
+}
+
+
+// ============================================================
+// 耳机控制入口卡片
+// ============================================================
+@Composable
+private fun BudsControlEntryCard(onClick: () -> Unit) {
+    val context = LocalContext.current
+    val forcedMode = remember {
+        mutableIntStateOf(BudsControlSettings.readForcedMode(context))
+    }
+
+    ElevatedCard(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() }
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Filled.Headphones,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(36.dp)
+            )
+
+            Spacer(Modifier.width(16.dp))
+
+            Column(Modifier.weight(1f)) {
+                Text(
+                    "耳机降噪",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    "预设：${BudsControlSettings.modeName(forcedMode.intValue)}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            Text(
+                "›",
+                style = MaterialTheme.typography.headlineSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
     }
 }
 

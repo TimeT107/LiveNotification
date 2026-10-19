@@ -34,9 +34,12 @@ class ExpressSmsReceiver : BroadcastReceiver() {
         }
 
         // ============ ② 验证码识别 ============
-        val code = VerificationParser.parse(fullBody)
-        if (code != null) {
-            handleVerification(context, code, fullBody)
+        // Gated by the feature switch: still rough, off by default.
+        if (FeaturePreferences.isVerificationEnabled(context)) {
+            val code = VerificationParser.parse(fullBody)
+            if (code != null) {
+                handleVerification(context, code, fullBody)
+            }
         }
     }
 

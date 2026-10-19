@@ -5,6 +5,8 @@ import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraManager
 import android.os.Build
 import android.util.Log
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.FlashlightOn
 
 
 object FlashlightController {
@@ -16,6 +18,19 @@ object FlashlightController {
     private var maxStrengthLevel: Int = 1
 
     private var callbackRegistered = false
+
+    @Volatile
+    private var appContext: Context? = null
+
+    /**
+     * Last state reported to the chip.
+     *
+     * Registering the callback immediately delivers the current state, which is not a user
+     * action; without this the chip popped up saying "手电筒已关" on every app start. -1 means
+     * nothing has been reported yet.
+     */
+    @Volatile
+    private var lastChipState: Int = -1
 
     /**
      * ★ 用户手动设置的亮度等级缓存
@@ -36,6 +51,8 @@ object FlashlightController {
 
     fun init(context: Context) {
         if (cameraManager != null) return
+
+        appContext = context.applicationContext
 
         try {
             val cm = context.getSystemService(Context.CAMERA_SERVICE)
@@ -125,6 +142,23 @@ object FlashlightController {
                 )
             )
             Log.d(TAG, "状态变化: enabled=$enabled, level=$level")
+
+            // Chip instead of a notification: same presentation as the earbuds mode chip,
+            // and no notification is posted. Only on a real transition — the callback also
+            // fires once at registration with the current state.
+            val ctx = appContext
+            val stateNow = if (enabled) 1 else 0
+            if (ctx != null && lastChipState != -1 && lastChipState != stateNow &&
+                FeaturePreferences.isFlashlightChipEnabled(ctx)
+            ) {
+                val label = if (enabled) {
+                    if (supportsBrightness) "手电筒 $level/$maxStrengthLevel" else "手电筒已开"
+                } else {
+                    "手电筒已关"
+                }
+                ChipOverlay.show(ctx, Icons.Filled.FlashlightOn, label)
+            }
+            lastChipState = stateNow
         }
 
         override fun onTorchModeUnavailable(cameraId: String) {

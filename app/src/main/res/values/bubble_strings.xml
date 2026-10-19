@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 气泡通知（合并自 BubbleNotifyDemo）
+     注意：app_name 与宿主同名，已移除；标签用宿主的 app_name。 -->
+<resources>
+
+    <string name="listener_service_label">气泡通知服务</string>
+
+    <!-- 主界面 -->
+    <string name="main_title">气泡通知 Demo</string>
+    <string name="main_status_checking">正在检查权限…</string>
+    <string name="main_status_enabled">✅ 通知监听权限已开启\n\n现在用微信或 QQ 发一条消息试试</string>
+    <string name="main_status_disabled">❌ 通知监听权限未开启</string>
+    <string name="main_open_settings">打开通知访问设置</string>
+    <string name="main_permission_title">需要通知访问权限</string>
+    <string name="main_permission_message">请开启通知访问权限，以便气泡功能正常工作。\n\n路径：设置 → 应用 → 特殊应用权限 → 通知访问权限 → 找到「气泡通知 Demo」并开启</string>
+    <string name="main_permission_positive">去设置</string>
+    <string name="main_permission_negative">取消</string>
+    <string name="main_notification_denied">需要通知权限才能显示气泡</string>
+
+    <!-- 气泡开关状态 -->
+    <string name="main_bubble_checking">正在检查气泡开关…</string>
+    <string name="main_bubble_enabled">✅ 气泡已允许</string>
+    <string name="main_bubble_disabled_app">⚠️ 系统把本应用的气泡关掉了\n\n很多 ROM 默认如此，需要手动开启，否则只会显示普通通知</string>
+    <string name="main_bubble_disabled_channel">⚠️「气泡通知」这个渠道的气泡被关掉了</string>
+    <string name="main_open_bubble_settings">打开气泡设置</string>
+    <string name="main_bubble_settings_failed">没能打开设置页，请手动到 设置 → 通知 里找本应用</string>
+
+    <!-- 白名单 / 小窗 / 常驻 -->
+    <string name="main_pick_apps">选择要接管的应用</string>
+    <string name="main_pick_apps_done">已选择 %1$d 个应用</string>
+    <string name="main_open_in_window">小窗打开应用</string>
+    <string name="main_apps_empty">没有可选的桌面应用</string>
+    <string name="main_window_empty">白名单里还没有应用，先点上面那个按钮勾选</string>
+    <string name="main_window_failed">小窗打开失败</string>
+    <string name="window_bubble_text">小窗运行中，点开预览</string>
+    <string name="main_switch_keep_alive">后台常驻（保持气泡存活）</string>
+    <string name="keep_alive_channel">后台常驻</string>
+    <string name="keep_alive_title">气泡通知正在后台运行</string>
+    <string name="keep_alive_text">点此回到设置</string>
+
+    <!-- 开关 -->
+    <string name="main_switch_auto_expand">收到消息直接展开气泡</string>
+    <string name="main_switch_heads_up">消息来时弹内容横幅</string>
+    <string name="main_switch_dedupe">源应用已弹横幅时不重复弹</string>
+    <string name="main_switch_intercept">接管原应用通知（只留气泡）</string>
+    <string name="main_switch_expand_source">气泡展开显示原应用界面</string>
+    <string name="main_switch_hint">改动对下一条消息生效</string>
+
+    <!-- 气泡界面 -->
+    <string name="bubble_title_placeholder">会话标题</string>
+    <string name="bubble_message_placeholder">消息内容</string>
+    <string name="bubble_app_icon_desc">原应用图标</string>
+    <string name="bubble_close">关闭</string>
+    <string name="bubble_open_app">打开应用</string>
+    <string name="bubble_reply_hint">输入回复…</string>
+    <string name="bubble_send">发送</string>
+    <string name="bubble_sent">已发送</string>
+    <string name="bubble_send_failed">发送失败，会话可能已过期</string>
+    <string name="bubble_app_not_found">未找到该应用</string>
+</resources>

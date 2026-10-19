@@ -25,6 +25,25 @@
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.FLASHLIGHT" />
 
+    <!-- 耳机独立控制：直连 RFCOMM channel 15，不依赖欢律 App -->
+    <uses-permission
+        android:name="android.permission.BLUETOOTH"
+        android:maxSdkVersion="30" />
+    <uses-permission
+        android:name="android.permission.BLUETOOTH_ADMIN"
+        android:maxSdkVersion="30" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
+
+    <!-- Android 11+ 包可见性：气泡通知的白名单列表要枚举"有桌面入口的应用"，
+         不声明的话 queryIntentActivities 只能看到极少数应用，列表会是空的。 -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
+    </queries>
+
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -126,6 +145,78 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/widget_trip_info" />
         </receiver>
+
+        <!-- ================= 锁屏岛（合并自 LockScreenIsland 模块） ================= -->
+
+        <!-- 外观自检页：用同一个 IslandView 渲染各状态 -->
+        <activity
+            android:name=".island.PreviewActivity"
+            android:exported="false"
+            android:label="外观自检"
+            android:theme="@style/Theme.LockScreenIsland" />
+
+        <!-- 注入探针：导出是为了 adb 直接启动做验证 -->
+        <activity
+            android:name=".island.InjectionProbeActivity"
+            android:exported="true"
+            android:label="注入探针"
+            android:theme="@style/Theme.LockScreenIsland" />
+
+        <!-- 接收 SystemUI 拖动岛之后回传的垂直位置，落盘保存 -->
+        <receiver
+            android:name=".island.NudgeReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.example.livenotification.NUDGE_CHANGED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- ===== LSPosed 模块声明（本 APK 同时是 Xposed 模块） ===== -->
+        <meta-data
+            android:name="xposedmodule"
+            android:value="true" />
+        <meta-data
+            android:name="xposeddescription"
+            android:value="LiveChip + MD3E 锁屏岛（合并模块）" />
+        <meta-data
+            android:name="xposedminversion"
+            android:value="82" />
+        <meta-data
+            android:name="xposedscope"
+            android:resource="@array/xposedscope" />
+
+        <!-- ================= 气泡通知（合并自 BubbleNotifyDemo） ================= -->
+
+        <!-- 气泡展开页：由系统在气泡窗口里拉起；界面是 Compose，主题透明背景 -->
+        <activity
+            android:name=".bubble.BubbleActivity"
+            android:theme="@style/Theme.BubbleNotify"
+            android:allowEmbedded="true"
+            android:resizeableActivity="true"
+            android:documentLaunchMode="always"
+            android:windowSoftInputMode="adjustResize"
+            android:exported="true" />
+
+        <!-- 后台常驻：把进程优先级顶到前台，避免监听服务被回收 -->
+        <service
+            android:name=".bubble.KeepAliveService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="notification_bubble_proxy" />
+        </service>
+
+        <!-- 通知监听：把白名单应用（微信/QQ）的通知接成系统原生气泡 -->
+        <service
+            android:name=".bubble.NotifyListenerService"
+            android:label="@string/listener_service_label"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+        </service>
 
     </application>
 

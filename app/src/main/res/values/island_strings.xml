@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 锁屏岛的字符串（合并自 LockScreenIsland 模块）。
+     注意：岛原来的 app_name("锁屏岛") 与宿主 App 的 app_name("LiveChip") 同名，
+     资源名全模块唯一，故改名为 island_app_name。 -->
+<resources>
+    <string name="island_app_name">锁屏岛</string>
+    <string name="app_subtitle">MD3E 锁屏岛 · PixelOS 17</string>
+
+    <string name="status_module">模块版本</string>
+    <string name="status_hooked">注入状态</string>
+    <string name="status_hooked_yes">已注入 SystemUI</string>
+    <string name="status_hooked_no">未注入（检查 LSPosed 作用域）</string>
+    <string name="status_unknown">未知</string>
+
+    <string name="section_general">外观</string>
+    <string name="section_layout">位置与大小</string>
+    <string name="section_debug">调试</string>
+
+    <string name="pref_enable">启用锁屏岛</string>
+    <string name="pref_enable_desc">总开关，关闭后锁屏上不显示任何内容</string>
+    <string name="pref_vertical_bias">垂直位置（0-100）</string>
+    <string name="pref_vertical_bias_desc">数值越大越靠下。也可以直接在锁屏上长按岛拖动，松手自动保存到这里</string>
+    <string name="pref_drag_enabled">允许在锁屏上长按拖动岛</string>
+    <string name="pref_drag_enabled_desc">长按岛约半秒即可上下拖动，松手自动保存位置</string>
+    <string name="pref_width_percent">宽度占比（0-100）</string>
+    <string name="pref_width_percent_desc">默认 88，表示占屏幕宽度的百分比</string>
+    <string name="pref_height">收起高度（dp）</string>
+    <string name="pref_height_desc">默认 56，胶囊态的高度</string>
+    <string name="pref_expanded_height">展开高度（dp）</string>
+    <string name="pref_expanded_height_desc">默认 108，点一下展开成大卡片时的高度</string>
+    <string name="pref_show_on_aod">息屏显示也显示</string>
+    <string name="pref_debug_log">输出详细日志</string>
+    <string name="pref_debug_log_desc">会写入 /data/user_de/0/com.android.systemui/files/lockscreenisland.log</string>
+    <string name="pref_reset">恢复默认</string>
+
+    <string name="btn_restart_sysui">重启 SystemUI</string>
+    <string name="btn_restart_sysui_desc">改完位置/大小后需要重启 SystemUI 才生效</string>
+    <string name="btn_preview">打开外观自检</string>
+    <string name="btn_preview_desc">用锁屏上同一个视图渲染各状态，不用登锁屏就能看样式</string>
+    <string name="btn_export_log">复制日志路径</string>
+
+    <string name="help_title">怎么用</string>
+    <string name="help_body">1. 在 LSPosed 里启用本模块，作用域勾选「系统界面 (com.android.systemui)」。\n2. 强制停止系统界面，或直接重启手机。\n3. 锁屏后即可看到岛。\n4. 播放音乐时岛会显示封面、标题、歌手和律动条。\n5. 点一下岛 → 展开大卡片，可拖动进度、切歌。\n6. 长按岛约半秒 → 上下拖动调位置，松手自动保存。\n7. 双指捏合岛 → 缩放宽度，松手自动保存。\n8. 没有播放音乐时，有闹钟/充电/耳机就会显示对应状态胶囊。\n9. 改完设置点「重启 SystemUI」。\n\n已知限制：锁屏上有通知时，通知卡会画在岛之上（系统绘制顺序所致）。需要看岛时可先划掉或收起通知。</string>
+</resources>

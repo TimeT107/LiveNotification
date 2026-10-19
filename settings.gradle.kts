@@ -19,6 +19,8 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        // Xposed API（de.robv.android.xposed:api）—— 合并进来的锁屏岛模块要用
+        maven { url = uri("https://api.xposed.info/") }
     }
 }
 

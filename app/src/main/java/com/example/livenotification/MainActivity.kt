@@ -15,6 +15,9 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.room.Room
@@ -110,17 +113,27 @@ class MainActivity : ComponentActivity() {
 
                 Box(modifier = Modifier.fillMaxSize()) {
 
-                    MainNavigation(
-                        dao = dao,
-                        storage = storage,
-                        backupStorage = backupStorage,
-                        onOpenMediaControl = { openMediaControl.value = true }
-                    )
+                    // First run shows the guide before anything else.
+                    var showOnboarding by remember {
+                        mutableStateOf(!OnboardingPreference.isDone(context))
+                    }
 
-                    if (openMediaControl.value) {
-                        MediaControlOverlay(
-                            onDismiss = { openMediaControl.value = false }
+                    if (showOnboarding) {
+                        OnboardingScreen(onFinish = { showOnboarding = false })
+                    } else {
+                        MainNavigation(
+                            dao = dao,
+                            storage = storage,
+                            backupStorage = backupStorage,
+                            onOpenMediaControl = { openMediaControl.value = true },
+                            onReplayOnboarding = { showOnboarding = true },
                         )
+
+                        if (openMediaControl.value) {
+                            MediaControlOverlay(
+                                onDismiss = { openMediaControl.value = false }
+                            )
+                        }
                     }
                 }
             }

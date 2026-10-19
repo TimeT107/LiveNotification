@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 气泡展开页的窗口主题（合并自 BubbleNotifyDemo）。
+     实际界面是 Compose（BubbleActivity -> BubbleChatScreen），窗口背景透明，
+     由 Compose 的 Surface 画 Material3 背景，因此深浅色与主软件一致。 -->
+<resources>
+    <style name="Theme.BubbleNotify" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+    </style>
+</resources>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 锁屏岛三个 Activity 的主题（合并自 LockScreenIsland 模块）。
+     宿主 App 的 application 主题保持 Theme.LiveNotificationDemo 不变，
+     岛自己的 Activity 单独挂这个主题。 -->
+<resources>
+    <style name="Theme.LockScreenIsland" parent="Theme.Material3.DayNight">
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+</resources>

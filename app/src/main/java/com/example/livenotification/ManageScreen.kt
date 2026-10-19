@@ -22,6 +22,7 @@ import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material.icons.filled.LocalShipping
 import androidx.compose.material.icons.filled.MusicNote
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Train
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -41,7 +42,8 @@ fun ManageScreen(
     storage: LiveNotificationStorage,
     backupStorage: BackupStorage,
     subPage: String?,
-    onSubPageChange: (String?) -> Unit
+    onSubPageChange: (String?) -> Unit,
+    onReplayOnboarding: () -> Unit = {},
 ) {
 
     // 拦截返回：按层级返回
@@ -117,6 +119,13 @@ fun ManageScreen(
                     onBack = { onSubPageChange("trip") }
                 )
             }
+
+            "settings" -> {
+                SettingsScreen(
+                    onBack = { onSubPageChange(null) },
+                    onReplayOnboarding = onReplayOnboarding,
+                )
+            }
         }
     }
 }
@@ -173,10 +182,23 @@ private fun ManageMainScreen(
             .verticalScroll(rememberScrollState())
     ) {
 
-        Text(
-            text = "管理",
-            style = MaterialTheme.typography.headlineMedium
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "管理",
+                style = MaterialTheme.typography.headlineMedium,
+                modifier = Modifier.weight(1f)
+            )
+            IconButton(onClick = { onNavigate("settings") }) {
+                Icon(
+                    imageVector = Icons.Filled.Settings,
+                    contentDescription = "设置",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
 
         Spacer(Modifier.height(16.dp))
 

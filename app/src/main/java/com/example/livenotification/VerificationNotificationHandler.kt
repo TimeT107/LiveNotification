@@ -14,6 +14,9 @@ object VerificationNotificationHandler {
 
     fun handle(context: Context, sbn: StatusBarNotification) {
 
+        // Respect the feature switch; the capability is still rough and off by default.
+        if (!FeaturePreferences.isVerificationEnabled(context)) return
+
         // 过滤自己的通知
         if (sbn.packageName == context.packageName) return
 
