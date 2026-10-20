@@ -51,6 +51,7 @@ fun ManageScreen(
         onSubPageChange(
             when (subPage) {
                 "trip_train", "trip_flight" -> "trip"
+                "about" -> "settings"
                 else -> null
             }
         )
@@ -124,6 +125,13 @@ fun ManageScreen(
                 SettingsScreen(
                     onBack = { onSubPageChange(null) },
                     onReplayOnboarding = onReplayOnboarding,
+                    onOpenAbout = { onSubPageChange("about") },
+                )
+            }
+
+            "about" -> {
+                AboutScreen(
+                    onBack = { onSubPageChange("settings") }
                 )
             }
         }
